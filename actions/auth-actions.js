@@ -1,7 +1,7 @@
 "use server";
 
 import { createAuthSession } from "@/lib/auth";
-import { hashUserPassword } from "@/lib/hash";
+import { hashUserPassword, verifyPassword } from "@/lib/hash";
 import { createUser } from "@/lib/user";
 import { redirect } from "next/navigation";
 
@@ -34,4 +34,26 @@ export async function signup(prevState, formData) {
     }
     throw error;
   }
+}
+
+export async function login(prevState, formData) {
+  const email = formData.get("email");
+  const password = formData.get("password");
+
+  let errors = {};
+
+  const existingUser = getUserByEmail(email);
+
+  if (!existingUser) {
+    return (errors.email = "Invalid email or password.");
+  }
+
+  const isValidPassword = verifyPassword(existingUser.password, password);
+
+  if (!isValidPassword) {
+    return (errors.email = "Invalid email or password.");
+  }
+
+  await createAuthSession(existingUser.id);
+  redirect("/training");
 }
